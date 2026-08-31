@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/google/uuid"
-	"github.com/tcero76/borrar/borrar-service/dto"
+	"github.com/tcero76/business-engine/business-engine-service/dto"
 )
 
 type Inventory interface {

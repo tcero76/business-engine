@@ -7,7 +7,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/require"
-	"github.com/tcero76/borrar/postgres/model"
+	"github.com/tcero76/business-engine/postgres/model"
 	"gorm.io/gorm"
 )
 

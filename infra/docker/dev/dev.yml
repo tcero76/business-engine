@@ -1,9 +1,9 @@
 services:
   app:
-    working_dir: /app/borrar-service/
+    working_dir: /app/business-engine-service/
     command: ["air"]
     volumes:
-      - ./borrar-service/:/app/borrar-service/
+      - ./business-engine-service/:/app/business-engine-service/
       - ./postgres/:/app/postgres/
       - ./.vscode:/app/.vscode
     profiles:

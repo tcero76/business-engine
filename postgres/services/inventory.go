@@ -9,8 +9,8 @@ import (
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 
-	"github.com/tcero76/borrar/borrar-service/dto"
-	"github.com/tcero76/borrar/postgres/model"
+	"github.com/tcero76/business-engine/business-engine-service/dto"
+	"github.com/tcero76/business-engine/postgres/model"
 )
 
 // var _ iservice.Inventory = (*InventoryService)(nil)

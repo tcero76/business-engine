@@ -8,10 +8,10 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/shopspring/decimal"
-	"github.com/tcero76/borrar/borrar-service/dto"
-	"github.com/tcero76/borrar/postgres/config"
-	"github.com/tcero76/borrar/postgres/model"
-	"github.com/tcero76/borrar/postgres/services"
+	"github.com/tcero76/business-engine/business-engine-service/dto"
+	"github.com/tcero76/business-engine/postgres/config"
+	"github.com/tcero76/business-engine/postgres/model"
+	"github.com/tcero76/business-engine/postgres/services"
 )
 
 func TestGetStock(t *testing.T) {

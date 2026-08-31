@@ -8,8 +8,8 @@ import (
 	"gorm.io/gorm/clause"
 
 	"github.com/shopspring/decimal"
-	"github.com/tcero76/borrar/borrar-service/dto"
-	"github.com/tcero76/borrar/postgres/model"
+	"github.com/tcero76/business-engine/business-engine-service/dto"
+	"github.com/tcero76/business-engine/postgres/model"
 )
 
 type PaymentService struct {

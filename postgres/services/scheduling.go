@@ -10,10 +10,10 @@ import (
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 
-	"github.com/tcero76/borrar/postgres/model"
+	"github.com/tcero76/business-engine/postgres/model"
 
-	"github.com/tcero76/borrar/borrar-service/dto"
-	IServices "github.com/tcero76/borrar/borrar-service/services"
+	"github.com/tcero76/business-engine/business-engine-service/dto"
+	IServices "github.com/tcero76/business-engine/business-engine-service/services"
 )
 
 type schedulingService struct {

@@ -1,4 +1,4 @@
-module github.com/tcero76/borrar/borrar-service
+module github.com/tcero76/business-engine/business-engine-service
 
 go 1.25.5
 
@@ -6,7 +6,7 @@ require (
 	github.com/google/uuid v1.6.0
 	github.com/shopspring/decimal v1.4.0
 	github.com/stretchr/testify v1.11.1
-	github.com/tcero76/borrar/postgres v0.0.0
+	github.com/tcero76/business-engine/postgres v0.0.0
 	gorm.io/gorm v1.31.0
 )
 
@@ -31,4 +31,4 @@ require (
 	gorm.io/driver/postgres v1.6.0 // indirect
 )
 
-replace github.com/tcero76/borrar/postgres => ../postgres
+replace github.com/tcero76/business-engine/postgres => ../postgres

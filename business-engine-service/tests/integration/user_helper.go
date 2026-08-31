@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/tcero76/borrar/postgres/model"
+	"github.com/tcero76/business-engine/postgres/model"
 	"gorm.io/gorm"
 )
 

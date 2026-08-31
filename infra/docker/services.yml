@@ -1,7 +1,7 @@
 services:
   app:
-    image: tcero76/demo-borrar-service:dev
+    image: tcero76/business-engine-service:dev
     build:
-      context: borrar-service
+      context: business-engine-service
       dockerfile: deploy/Dockerfile
       target: ${PROFILE}
