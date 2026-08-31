@@ -1,0 +1,93 @@
+static_resources:
+  listeners:
+    - name: listener_rtmp
+      address:
+        socket_address:
+          address: 0.0.0.0
+          port_value: 1935
+      filter_chains:
+        - filters:
+            - name: envoy.filters.network.tcp_proxy
+              typed_config:
+                "@type": type.googleapis.com/envoy.extensions.filters.network.tcp_proxy.v3.TcpProxy
+                stat_prefix: rtmp_tcp
+                cluster: mediamtx_cluster
+    - name: listener_hls
+      address:
+        socket_address:
+          address: 0.0.0.0
+          port_value: 8888
+      filter_chains:
+        - filters:
+            - name: envoy.filters.network.http_connection_manager
+              typed_config:
+                "@type": type.googleapis.com/envoy.extensions.filters.network.http_connection_manager.v3.HttpConnectionManager
+                stat_prefix: ingress_http
+                rds: 
+                  route_config_name: media_routes
+                  config_source:
+                    resource_api_version: V3
+                    api_config_source:
+                      api_type: GRPC
+                      transport_api_version: V3
+                      grpc_services:
+                        - envoy_grpc:
+                            cluster_name: xds_cluster
+                http_filters:
+                  - name: envoy.filters.http.router
+                    typed_config:
+                      "@type": type.googleapis.com/envoy.extensions.filters.http.router.v3.Router
+                access_log:
+                  - name: envoy.access_loggers.stdout
+                    typed_config:
+                      "@type": type.googleapis.com/envoy.extensions.access_loggers.stream.v3.StdoutAccessLog
+  clusters:
+    - name: mediamtx_cluster
+      connect_timeout: 1s
+      type: strict_dns
+      lb_policy: ROUND_ROBIN
+      load_assignment:
+        cluster_name: mediamtx_cluster
+        endpoints:
+          - lb_endpoints:
+              - endpoint:
+                  address:
+                    socket_address:
+                      address: mediamtx1
+                      port_value: 1935
+                load_balancing_weight: 80
+              - endpoint:
+                  address:
+                    socket_address:
+                      address: mediamtx2
+                      port_value: 1935
+                load_balancing_weight: 20
+    - name: xds_cluster
+      connect_timeout: 5s
+      type: logical_dns
+      http2_protocol_options: {}
+      load_assignment:
+        cluster_name: xds_cluster
+        endpoints:
+          - lb_endpoints:
+              - endpoint:
+                  address:
+                    socket_address:
+                      address: mediamtx-service
+                      port_value: 18000
+admin:
+  address:
+    socket_address:
+      address: 0.0.0.0
+      port_value: 9901
+node:
+  id: envoy-media-1
+  cluster: media-proxy
+dynamic_resources:
+  cds_config:
+    api_config_source:
+      api_type: GRPC
+      transport_api_version: V3
+      grpc_services:
+        - envoy_grpc:
+            cluster_name: xds_cluster

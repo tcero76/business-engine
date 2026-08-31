@@ -1,0 +1,36 @@
+services:
+  app:
+    working_dir: /app/borrar-service/
+    command: ["air"]
+    volumes:
+      - ./borrar-service/:/app/borrar-service/
+      - ./postgres/:/app/postgres/
+      - ./.vscode:/app/.vscode
+    profiles:
+      - app
+    container_name: app
+    cap_add:
+      - SYS_PTRACE
+    security_opt:
+      - seccomp:unconfined
+    stdin_open: true
+    tty: true
+    environment:
+      - DNS=postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DB}?sslmode=disable
+      - PORT=3000
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.bff.rule=Host(`${HOST_EXTERNAL}`) && PathPrefix(`/app`)
+      - traefik.http.middlewares.bff-strip.stripprefix.prefixes=/bff
+      - traefik.http.routers.bff.middlewares=bff-strip
+      - traefik.http.routers.bff.entrypoints=websecure
+      - traefik.http.routers.bff.tls=true
+      - traefik.http.services.bff.loadbalancer.server.port=3000
+      - traefik.http.routers.bff.priority=100
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    networks:
+      - ${NETWORK_APPLICATION:-application}

@@ -1,0 +1,62 @@
+services:
+  db:
+    image: timescale/timescaledb:${TIMESCALEDB_VERSION:-2.20.1-pg17}
+    volumes:
+      - timescaledb_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    environment:
+     POSTGRES_PASSWORD_FILE: /run/secrets/postgres_password
+     POSTGRES_USER: ${POSTGRES_USER}
+     POSTGRES_DB: ${POSTGRES_DB}
+     PGDATA: /var/lib/postgresql/data/pgdata
+    secrets:
+      - postgres_password
+    networks:
+      - ${NETWORK_APPLICATION:-application}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints:
+          - node.hostname == swarm-worker-0
+      restart_policy:
+        condition: on-failure
+        delay: 10s
+        max_attempts: 5
+  flyway:
+    image: flyway/flyway:latest-alpine
+    entrypoint: ["/entrypoint.sh"]
+    command:
+      - flyway
+      - migrate
+    environment:
+     POSTGRES_USER: ${POSTGRES_USER}
+     POSTGRES_DB: ${POSTGRES_DB}
+     POSTGRES_HOST: ${POSTGRES_HOST}
+     POSTGRES_PORT: ${POSTGRES_PORT}
+     PROTOCOL_EXTERNAL: ${PROTOCOL_EXTERNAL}
+     HOST_EXTERNAL: ${HOST_EXTERNAL}
+    secrets:
+      - postgres_password
+    configs:
+      - source: flyway_entrypoint
+        target: /entrypoint.sh
+        mode: 0555
+    volumes:
+      - /root/flyway/sql/:/flyway/sql
+    deploy:
+      mode: replicated-job
+      restart_policy:
+        condition: none
+      placement:
+        constraints:
+          - node.hostname == swarm-manager
+    networks:
+      - ${NETWORK_APPLICATION:-application}
+      

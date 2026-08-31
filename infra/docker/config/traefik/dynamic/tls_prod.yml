@@ -1,0 +1,6 @@
+tls:
+  stores:
+    default:
+      defaultCertificate:
+        certFile: /run/secrets/traefik_server_crt
+        keyFile: /run/secrets/traefik_server_key

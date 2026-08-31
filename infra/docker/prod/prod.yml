@@ -1,0 +1,40 @@
+services:
+  bff-service:
+    working_dir: /bff-service
+    command: ["/app/main"]
+    environment:
+      - PORT=3000
+    networks:
+      - ${NETWORK_APPLICATION:-application}
+    secrets:
+      - google_oauth2_client_secret
+      - google_oauth2_client_id
+      - client_id
+      - client_secret
+      - postgres_password
+    depends_on:
+      - db
+      - broker
+      - hydra
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:3000/health"]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+    deploy:
+      labels:
+        - traefik.enable=true
+        - traefik.http.middlewares.bff-strip.stripprefix.prefixes=/bff
+        - traefik.http.routers.bff.rule=Host(`${HOST_EXTERNAL}`) && PathPrefix(`/bff`)
+        - traefik.http.routers.bff.entrypoints=websecure
+        - traefik.http.routers.bff.tls=true
+        # - traefik.http.routers.front.tls.certresolver=le
+        - traefik.http.services.bff.loadbalancer.server.port=3000
+        - traefik.http.routers.bff.middlewares=bff-strip
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints:
+          - node.hostname == swarm-worker-0
+      restart_policy:
+        condition: on-failure

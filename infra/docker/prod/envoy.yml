@@ -1,0 +1,17 @@
+services:
+  envoy:
+    image: tcero76/envoy:${TAG}
+    environment:
+     - ENVOY_HOST=0.0.0.0
+     - ENVOY_PORT=$PORT_EXTERNAL
+    ports:
+      - $PORT_EXTERNAL:$PORT_EXTERNAL
+    networks:
+      - ${NETWORK_APPLICATION:-application}
+    deploy:
+      mode: replicated-job
+      restart_policy:
+        condition: none
+      placement:
+        constraints:
+          - node.hostname == swarm-manager

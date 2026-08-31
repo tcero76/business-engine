@@ -1,0 +1,24 @@
+services:
+  bff-service:
+    volumes:
+      - go-mod-cache:/go/pkg/mod
+      - go-build-cache:/root/.cache/go-build
+  e2e:
+    container_name: e2e
+    working_dir: /e2e
+    extra_hosts:
+      - "${HOST_EXTERNAL}:172.30.0.10"
+    profiles: 
+      - e2e
+    volumes:
+      - ./e2e:/e2e
+    networks:
+      - application
+      - proxy
+    ports:
+      - "5900:5900"
+    depends_on:
+      - front
+      - bff-service
+    entrypoint: ["/entrypoint.sh"]
+    command: tail -f /dev/null

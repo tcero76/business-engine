@@ -1,0 +1,146 @@
+unused_indexes:
+  query: |
+    SELECT
+      current_database() AS datname,
+      schemaname,
+      relname,
+      indexrelname,
+      idx_scan,
+      pg_relation_size(indexrelid) AS size_bytes
+    FROM pg_stat_user_indexes
+    WHERE schemaname NOT IN (
+        'pg_catalog',
+        'information_schema'
+    )
+    AND schemaname NOT LIKE '_timescaledb%'
+  metrics:
+    - datname:
+        usage: "LABEL"
+    - schemaname:
+        usage: "LABEL"
+    - relname:
+        usage: "LABEL"
+    - indexrelname:
+        usage: "LABEL"
+    - idx_scan:
+        usage: "COUNTER"
+    - size_bytes:
+        usage: "GAUGE"
+
+table_scans:
+  query: |
+    SELECT
+      current_database() AS datname,
+      schemaname,
+      relname,
+      seq_scan,
+      idx_scan,
+      seq_tup_read
+    FROM pg_stat_user_tables
+    WHERE schemaname NOT IN (
+        'pg_catalog',
+        'information_schema'
+    )
+    AND schemaname NOT LIKE '_timescaledb%'
+  metrics:
+    - datname:
+        usage: "LABEL"
+    - schemaname:
+        usage: "LABEL"
+    - relname:
+        usage: "LABEL"
+    - seq_scan:
+        usage: "COUNTER"
+    - idx_scan:
+        usage: "COUNTER"
+    - seq_tup_read:
+        usage: "COUNTER"
+
+table_vacuum_health:
+  query: |
+    SELECT
+      current_database() AS datname,
+      schemaname,
+      relname,
+      n_live_tup,
+      n_dead_tup,
+      vacuum_count,
+      autovacuum_count
+    FROM pg_stat_user_tables
+    WHERE schemaname NOT IN (
+        'pg_catalog',
+        'information_schema'
+    )
+    AND schemaname NOT LIKE '_timescaledb%'
+  metrics:
+    - datname:
+        usage: "LABEL"
+    - schemaname:
+        usage: "LABEL"
+    - relname:
+        usage: "LABEL"
+    - n_live_tup:
+        usage: "GAUGE"
+    - n_dead_tup:
+        usage: "GAUGE"
+    - vacuum_count:
+        usage: "COUNTER"
+    - autovacuum_count:
+        usage: "COUNTER"
+
+query_io_pressure:
+  query: |
+    SELECT
+      current_database() AS datname,
+      schemaname,
+      queryid,
+      calls,
+      shared_blks_hit,
+      shared_blks_read,
+      temp_blks_written
+    FROM pg_stat_statements
+    WHERE schemaname NOT IN (
+        'pg_catalog',
+        'information_schema'
+    )
+    AND schemaname NOT LIKE '_timescaledb%'
+  metrics:
+    - datname:
+        usage: "LABEL"
+    - schemaname:
+        usage: "LABEL"
+    - queryid:
+        usage: "LABEL"
+    - calls:
+        usage: "COUNTER"
+    - shared_blks_hit:
+        usage: "COUNTER"
+    - shared_blks_read:
+        usage: "COUNTER"
+    - temp_blks_written:
+        usage: "COUNTER"
+
+locks:
+  query: |
+    SELECT
+      current_database() AS datname,
+      schemaname,
+      mode,
+      COUNT(*) AS lock_count
+    FROM pg_locks
+    WHERE schemaname NOT IN (
+        'pg_catalog',
+        'information_schema'
+    )
+    AND schemaname NOT LIKE '_timescaledb%'
+    GROUP BY mode
+  metrics:
+    - datname:
+        usage: "LABEL"
+    - schemaname:
+        usage: "LABEL"
+    - mode:
+        usage: "LABEL"
+    - lock_count:
+        usage: "GAUGE"
+

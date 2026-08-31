@@ -1,0 +1,61 @@
+services:
+  traefik:
+    image: traefik:${TRAEFIK_VERSION}
+    command:
+      - "--ping=true"
+      - "--api.dashboard=true"
+      - "--api.insecure=true"
+
+      - "--accesslog=true"
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.websecure.address=:443"
+      - "--entrypoints.rtmp.address=:1935"
+      - "--entrypoints.web.http.redirections.entrypoint.to=websecure"
+      - "--entrypoints.web.http.redirections.entrypoint.scheme=https"
+#      - "--certificatesresolvers.le.acme.caServer=https://acme-staging-v02.api.letsencrypt.org/directory"
+      # - "--certificatesresolvers.le.acme.email=admin@${HOST_EXTERNAL}"
+      # - "--certificatesresolvers.le.acme.storage=/letsencrypt/acme.json"
+      # - "--certificatesresolvers.le.acme.tlschallenge=true"
+      - "--providers.file.directory=/etc/traefik/dynamic"
+      - "--providers.file.watch=true"
+
+      - "--providers.swarm=true"
+      - "--providers.swarm.endpoint=unix:///var/run/docker.sock"
+      - "--providers.swarm.exposedbydefault=false"
+    configs:
+      - source: traefik_tls
+        target: /etc/traefik/dynamic/tls.yml
+    secrets:
+     - traefik_server_crt
+     - traefik_server_key
+    ports:
+      - "80:80"
+      - "443:443"
+      - "8080:8080"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks:
+      - ${NETWORK_APPLICATION:-application}
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:8080/ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    deploy:
+      labels:
+        - traefik.enable=true
+        - traefik.http.routers.traefik.rule=Host(`traefik.${HOST_EXTERNAL}`)
+        - traefik.http.routers.traefik.entrypoints=websecure
+        - traefik.swarm.network=${NETWORK_APPLICATION:-application}
+        # - traefik.http.routers.traefik.tls.certresolver=le
+        - traefik.http.routers.traefik.tls=true
+        - traefik.http.services.traefik.loadbalancer.server.port=8080
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints:
+          - node.hostname == swarm-manager
+      restart_policy:
+        condition: any
+        delay: 5s

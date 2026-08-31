@@ -1,0 +1,52 @@
+services:
+  hydra:
+    image: oryd/hydra:${HYDRA_VERSION}
+    entrypoint: ["/entrypoint.sh"]
+    environment:
+      - URLS_SELF_ISSUER=${PROTOCOL_EXTERNAL}://auth.${HOST_EXTERNAL}
+      - URLS_LOGIN=${PROTOCOL_EXTERNAL}://${HOST_EXTERNAL}/${HOME_PAGE_PATH}/login
+      - URLS_CONSENT=${PROTOCOL_EXTERNAL}://${HOST_EXTERNAL}/bff/consent
+      - TTL_ACCESS_TOKEN=1h
+      - TTL_REFRESH_TOKEN=720h
+      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_HOST=${POSTGRES_HOST}
+      - POSTGRES_PORT=${POSTGRES_PORT}
+      - SECRETS_SYSTEM_FILE=/run/secrets/hydra_secret
+      - POSTGRES_PASSWORD_FILE=/run/secrets/postgres_password
+    secrets:
+      - postgres_password
+      - hydra_secret
+    networks:
+      - ${NETWORK_APPLICATION:-application}
+    configs:
+      - source: hydra_entrypoint
+        target: /entrypoint.sh
+        mode: 0555
+    deploy:
+      labels:
+        - traefik.enable=true
+        - traefik.http.routers.hydra.rule=Host(`auth.${HOST_EXTERNAL}`)
+        - traefik.http.routers.hydra.entrypoints=websecure
+        - traefik.http.routers.hydra.tls=true
+        # - traefik.http.routers.hydra.tls.certresolver=le
+        - traefik.http.services.hydra.loadbalancer.server.port=4444
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints:
+          - node.hostname == swarm-worker-0
+      restart_policy:
+        condition: any
+        delay: 5s
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "wget",
+          "--spider",
+          "-q",
+          "http://localhost:4445/health/ready"
+        ]
+    depends_on:
+      - db

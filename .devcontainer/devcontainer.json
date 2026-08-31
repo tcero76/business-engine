@@ -1,0 +1,17 @@
+{
+    "name": "Go Development",
+    "build": {
+        "dockerfile": "../Dockerfile",
+        "target": "dev"
+    },
+    "workspaceFolder": "/app",
+    "workspaceMount": "source=${localWorkspaceFolder},target=/app,type=bind",
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "golang.go"
+            ]
+        }
+    },
+    "remoteUser": "root"
+}

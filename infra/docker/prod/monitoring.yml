@@ -1,0 +1,187 @@
+services:
+  grafana:
+    image: grafana/grafana:12.0.1
+    hostname: grafana
+    container_name: grafana
+    profiles:
+      - monitoring
+    tty: true
+    stdin_open: true
+    ports:
+      - 3030:3000
+    volumes:
+      - ../../volumes/grafana:/var/lib/grafana
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    deploy:
+      labels:
+        - traefik.enable=true
+        - traefik.http.routers.monitoring.rule=Host(`monitoring.${HOST_EXTERNAL}`)
+        - traefik.http.routers.monitoring.entrypoints=websecure
+        - traefik.http.routers.monitoring.tls=true
+        - traefik.http.services.monitoring.loadbalancer.server.port=3000
+      replicas: 1
+      placement:
+        constraints:
+          - node.hostname == swarm-worker-0
+      restart_policy:
+        condition: any
+        delay: 5s
+    networks:
+      - ${NETWORK_APPLICATION}
+  prometheus:
+    image: prom/prometheus:v3.4.0
+    hostname: prometheus
+    container_name: prometheus
+    tty: true
+    stdin_open: true
+    ports:
+      - 9090:9090
+    volumes:
+      - ./config/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+      - ../../volumes/prometheus:/prometheus
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "wget",
+          "--spider",
+          "-q",
+          "http://localhost:9090/-/healthy"
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    deploy:
+      labels:
+        - traefik.enable=true
+        - traefik.http.routers.prometheus.rule=Host(`prom.${HOST_EXTERNAL}`)
+        - traefik.http.routers.prometheus.entrypoints=websecure
+        - traefik.http.routers.prometheus.tls=true
+        - traefik.http.services.prometheus.loadbalancer.server.port=9090
+      replicas: 1
+      placement:
+        constraints:
+          - node.hostname == swarm-worker-0
+      restart_policy:
+        condition: any
+        delay: 5s
+    networks:
+      - ${NETWORK_APPLICATION}
+  node_exporter:
+    image: prom/node-exporter:v1.9.1
+    command:
+      - --path.rootfs=/host
+    container_name: node_exporter
+    tty: true
+    stdin_open: true
+    volumes:
+      - /:/host:ro,rslave
+    ports:
+      - "9100:9100"
+    deploy:
+      mode: global
+      restart_policy:
+        condition: any
+        delay: 5s
+    networks:
+      - ${NETWORK_APPLICATION}
+  alloy:
+    image: grafana/alloy:latest
+    ports:
+      - target: 12345
+        published: 12345
+        protocol: tcp
+        mode: ingress
+    volumes:
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    command:
+      - run
+      - /etc/alloy/config.alloy
+      - --server.http.listen-addr=0.0.0.0:12345
+    configs:
+      - source: alloy_config
+        target: /etc/alloy/config.alloy
+    networks:
+      - ${NETWORK_APPLICATION}
+    deploy:
+      mode: global
+      restart_policy:
+        condition: any
+        delay: 5s
+  redis_exporter:
+    image: oliver006/redis_exporter:latest
+    command:
+      - --redis.addr=redis://cache:6379
+    ports:
+      - target: 9121
+        published: 9121
+        protocol: tcp
+        mode: ingress
+    networks:
+      - ${NETWORK_APPLICATION}
+    deploy:
+      placement:
+        constraints:
+          - node.hostname == swarm-worker-0
+      restart_policy:
+        condition: any
+        delay: 5s
+  pg_exporter:
+    image: quay.io/prometheuscommunity/postgres-exporter
+    command:
+      - --log.level=debug
+      - --extend.query-path=/etc/postgres_exporter/custom_queries.yaml
+    configs:
+      - source: postgres_exporter_custom_queries
+        target: /etc/postgres_exporter/custom_queries.yaml
+    environment:
+      DATA_SOURCE_URI: "${POSTGRES_HOST}:5432/${POSTGRES_DB}?sslmode=disable"
+      DATA_SOURCE_USER: "${POSTGRES_USER}"
+      DATA_SOURCE_PASS: "${POSTGRES_PASSWORD}"
+    networks:
+      - ${NETWORK_APPLICATION}
+    deploy:
+      placement:
+        constraints:
+          - node.hostname == swarm-worker-0
+      restart_policy:
+        condition: any
+        delay: 5s
+  loki:
+    image: grafana/loki:3.5.0
+    command:
+      - -config.file=/etc/loki/local-config.yaml
+    configs:
+      - source: loki_config
+        target: /etc/loki/local-config.yaml
+    volumes:
+      - ${LOKI_VOLUME}:/loki
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:3100/ready"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    ports:
+      - target: 3100
+        published: 3100
+        protocol: tcp
+        mode: ingress
+    networks:
+      - ${NETWORK_APPLICATION}
+    deploy:
+      replicas: 1
+      placement:
+        constraints:
+          - node.hostname == swarm-worker-0
+      restart_policy:
+        condition: any
+        delay: 5s

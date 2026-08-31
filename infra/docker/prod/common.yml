@@ -1,0 +1,55 @@
+networks:
+  application:
+    name: ${TF_VAR_overlay_network:-application}
+    driver: overlay
+    attachable: true
+    external: true
+volumes:
+  timescaledb_data:
+    name: timescaledb_data
+    driver_opts:
+      type: none
+      device: ${POSTGRES_VOLUME}/data
+      o: bind
+  redis_data:
+    name: redis_data
+    driver_opts:
+      type: none
+      device: ${REDIS_VOLUME}/data
+      o: bind
+configs:
+  redis_config:
+    external: true
+  hydra_entrypoint:
+    external: true
+  traefik_tls:
+    external: true
+  alloy_config:
+    external: true
+  postgres_exporter_custom_queries:
+    external: true
+  loki_config:
+    external: true
+  rabbitmq_init:
+    external: true
+  flyway_entrypoint:
+    external: true  
+secrets:
+  hydra_secret:
+    external: true
+  google_oauth2_client_secret:
+    external: true
+  client_secret:
+    external: true
+  postgres_password:
+    external: true
+  password_insta:
+    external: true
+  google_oauth2_client_id:
+    external: true
+  client_id:
+    external: true
+  traefik_server_crt:
+    external: true
+  traefik_server_key:
+    external: true

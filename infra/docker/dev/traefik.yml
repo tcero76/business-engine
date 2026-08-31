@@ -1,0 +1,54 @@
+services:
+  traefik:
+    image: traefik:${TRAEFIK_VERSION}
+    container_name: traefik
+    profiles:
+      - traefik
+    command:
+      - "--ping=true"
+      - "--api.dashboard=true"
+      - "--metrics.prometheus=true"
+      - "--metrics.prometheus.entryPoint=metrics"
+      - "--entrypoints.metrics.address=:8082"
+
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.websecure.address=:443"
+      - "--entrypoints.rtmp.address=:1935"
+      - "--entrypoints.web.http.redirections.entrypoint.to=websecure"
+      - "--entrypoints.web.http.redirections.entrypoint.scheme=https"
+      # - "--certificatesresolvers.le.acme.caServer=https://acme-staging-v02.api.letsencrypt.org/directory"
+      # - "--certificatesresolvers.le.acme.email=admin@${HOST_EXTERNAL}"
+      # - "--certificatesresolvers.le.acme.storage=/letsencrypt/acme.json"
+      # - "--certificatesresolvers.le.acme.tlschallenge=true"
+      - "--providers.file.directory=/etc/traefik/dynamic"
+      - "--providers.file.watch=true"
+
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+    ports:
+      - "80:80"
+      - "443:443"
+      - "1935:1935"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./infra/docker/config/traefik/dynamic/tls.yml:/etc/traefik/dynamic/tls.yml
+      # - ./infra/docker/config/traefik/acme.json:/letsencrypt/acme.json
+      - ~/.environments/certs:/certs
+    networks:
+      application:
+      proxy:
+        ipv4_address: 172.30.0.10
+    labels:
+      - traefik.enable=true
+
+      - traefik.http.routers.traefik.rule=Host(`traefik.${HOST_EXTERNAL}`)
+      - traefik.http.routers.traefik.entrypoints=websecure
+      - traefik.http.routers.traefik.tls=true
+      # - traefik.http.routers.traefik.tls.certresolver=le
+      - traefik.http.routers.traefik.service=api@internal
+      - traefik.http.routers.traefik.priority=100
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:8080/ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
