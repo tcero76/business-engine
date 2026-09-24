@@ -9,11 +9,11 @@ import (
 
 type Inventory interface {
 	GetStock(ctx context.Context, productID uuid.UUID) (dto.StockResponse, error)
-	Purchase(ctx context.Context,request dto.PurchaseRequest) error
-	Sell(ctx context.Context,request dto.SellRequest) error
-	AdjustStock(ctx context.Context,request dto.AdjustStockRequest) error
+	Purchase(ctx context.Context, request dto.PurchaseRequest) error
+	Sell(ctx context.Context, request dto.SellRequest) error
+	AdjustStock(ctx context.Context, request dto.AdjustStockRequest) error
 	DisableProduct(ctx context.Context, productID uuid.UUID) error
-	EnableProduct(ctx context.Context,productID uuid.UUID) error
+	EnableProduct(ctx context.Context, productID uuid.UUID) error
 }
 
 type Scheduling interface {
