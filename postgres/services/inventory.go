@@ -10,10 +10,11 @@ import (
 	"gorm.io/gorm/clause"
 
 	"github.com/tcero76/business-engine/business-engine-service/dto"
+	"github.com/tcero76/business-engine/business-engine-service/services"
 	"github.com/tcero76/business-engine/postgres/model"
 )
 
-// var _ iservice.Inventory = (*InventoryService)(nil)
+var _ services.Inventory = (*InventoryService)(nil)
 
 type InventoryService struct {
 	db *gorm.DB
